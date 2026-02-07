@@ -1,6 +1,6 @@
 # AIAdventures – Inactive Student Re-engagement Automation
 
-![Inactive Student Agent](https://github.com/PranavUikey/aiadv_core/actions/workflows/inactive_student_mail.yml/badge.svg)
+![Inactive Student Agent](https://github.com/PranavUikey/aiadv_core/actions/workflows/inactive_student_agent.yml/badge.svg)
 
 > ⚠️ **Internal Use Only**  
 > This repository is intended for internal AIAdventures operations.  
