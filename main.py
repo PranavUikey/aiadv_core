@@ -28,11 +28,11 @@ def main():
         body = format_email(email_template, user_data)
 
         # DRY RUN
-        # print("=" * 80)
         
         # print("✅ DRY RUN: Email content for this user:")
-        # print(f"TO: {to_email}")
-        # print(body)
+        # print("=" * 80)
+        #     print(f"TO: {to_email}")
+        #     print(body)
         
 
         send_email(to_email, subject, body)
