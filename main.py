@@ -4,7 +4,7 @@ from mailer import send_email
 from tqdm import tqdm
 import traceback
 from dotenv import load_dotenv
-import json
+
 import os
 
 
@@ -19,9 +19,8 @@ with open("mail/email.txt", "r") as f:
 
 def main():
     data = get_inactive_students_mail_data(days=7)
-    if not os.path.exists("sent_log.json"):
-        with open("sent_log.json", "w") as f:
-            json.dump([], f)
+
+
 
     print(f"Preparing emails for {len(data)} users...\n")
 
