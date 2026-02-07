@@ -54,6 +54,11 @@ def send_email(to_email: str, subject: str, body: str):
 
             time.sleep(RETRY_DELAY)
 
+        except smtplib.SMTPDataError as e:
+            # Recipient rejected by server (disabled / blocked)
+            print(f"⚠️ Skipping recipient {to_email}: {e}")
+            return  # DO NOT crash agent
+
         except smtplib.SMTPException as e:
             print(f"❌ SMTP error for {to_email}: {e}")
             raise
