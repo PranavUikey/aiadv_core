@@ -1,9 +1,9 @@
 name: Inactive Student Re-engagement Agent
 
 on:
-  # Daily run at 9:00 AM IST (03:30 UTC)
+  # Daily run at 17:30 PM IST (03:30 UTC)
   schedule:
-    - cron: "0 17 * * *"
+    - cron: "30 17 * * *"
 
   # Manual trigger
   workflow_dispatch:
@@ -27,7 +27,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests python-dotenv tqdm
 
-      # 🔁 RESTORE sent email log (deduplication memory)
+      # 🔁 Restore sent email log (deduplication memory)
       - name: Download sent email log
         uses: actions/download-artifact@v4
         with:
@@ -40,14 +40,15 @@ jobs:
           MOODLE_BASE_URL: ${{ secrets.MOODLE_BASE_URL }}
           MOODLE_TOKEN: ${{ secrets.MOODLE_TOKEN }}
 
-          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_ADMIN_EMAIL: ${{ secrets.SMTP_ADMIN_EMAIL }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
           SMTP_EMAIL: ${{ secrets.SMTP_EMAIL }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
         run: |
           python main.py
 
-      # 💾 SAVE updated sent email log
+      # 💾 Save updated sent email log
       - name: Upload sent email log
         if: always()
         uses: actions/upload-artifact@v4
