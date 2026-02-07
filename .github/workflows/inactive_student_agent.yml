@@ -1,9 +1,9 @@
-name: Inactive Student Agent
+name: Inactive Student Re-engagement Agent
 
 on:
   # Daily run at 9:00 AM IST (03:30 UTC)
   schedule:
-    - cron: "0 17 * * *"
+    - cron: "30 3 * * *"
 
   # Manual trigger
   workflow_dispatch:
@@ -11,7 +11,7 @@ on:
 jobs:
   run-agent:
     runs-on: ubuntu-latest
-    timeout-minutes: 120   # long-running SMTP-safe
+    timeout-minutes: 120
 
     steps:
       - name: Checkout repository
@@ -27,21 +27,51 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests python-dotenv tqdm
 
+      # 🔁 RESTORE sent email log (deduplication memory)
+      - name: Download sent email log
+        uses: actions/download-artifact@v4
+        with:
+          name: sent-log
+        continue-on-error: true
 
-      # ▶️ Run automation
+      # ▶️ Run the automation
       - name: Run inactive student agent
         env:
           MOODLE_BASE_URL: ${{ secrets.MOODLE_BASE_URL }}
           MOODLE_TOKEN: ${{ secrets.MOODLE_TOKEN }}
 
-          SMTP_ADMIN_EMAIL: ${{ secrets.SMTP_ADMIN_EMAIL }}
-          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
           SMTP_EMAIL: ${{ secrets.SMTP_EMAIL }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
         run: |
           python main.py
 
-      
+      # 💾 SAVE updated sent email log
+      - name: Upload sent email log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sent-log
+          path: sent_log.json
+          if-no-files-found: ignore
 
-      #
+      # 🚨 Create GitHub Issue if workflow fails
+      - name: Create GitHub Issue on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "🚨 Inactive Student Agent Failed",
+              body: `
+              The inactive student automation failed.
+
+              Run ID: ${context.runId}
+              Time: ${new Date().toISOString()}
+
+              Please check GitHub Actions logs.
+              `
+            })
