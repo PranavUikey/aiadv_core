@@ -1,0 +1,80 @@
+name: Inactive Student Agent
+
+on:
+  # Daily run at 9:00 AM IST (03:30 UTC)
+  schedule:
+    - cron: "0 17 * * *"
+
+  # Manual trigger
+  workflow_dispatch:
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120   # long-running SMTP-safe
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests python-dotenv tqdm
+
+      # 🔁 Restore email send history (deduplication)
+      - name: Download sent email log
+        uses: actions/download-artifact@v4
+        with:
+          name: sent-log
+        continue-on-error: true
+
+      # ▶️ Run automation
+      - name: Run inactive student agent
+        env:
+          MOODLE_BASE_URL: ${{ secrets.MOODLE_BASE_URL }}
+          MOODLE_TOKEN: ${{ secrets.MOODLE_TOKEN }}
+
+          SMTP_ADMIN_EMAIL: ${{ secrets.SMTP_ADMIN_EMAIL }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_EMAIL: ${{ secrets.SMTP_EMAIL }}s
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+        run: |
+          python main.py
+
+      # 💾 Persist send history for next run
+      - name: Upload sent email log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sent-log
+          path: sent_log.json
+          if-no-files-found: ignore
+
+      # 🚨 Create GitHub Issue on failure (internal alert)
+      - name: Create GitHub Issue on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "🚨 Inactive Student Agent Failed",
+              body: `
+              The inactive student re-engagement workflow failed.
+
+              **Repository:** ${context.repo.repo}
+              **Run ID:** ${context.runId}
+              **Triggered by:** ${context.eventName}
+              **Timestamp:** ${new Date().toISOString()}
+
+              Please check the GitHub Actions logs for details.
+              `
+            })
