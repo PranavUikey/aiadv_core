@@ -18,51 +18,36 @@ RETRY_DELAY = 15      # seconds between retries
 SEND_DELAY = 10       # seconds between successful sends
 
 
-def send_email(to_email: str, subject: str, body: str):
+def send_email(to_email: str, subject: str, body: str) -> bool:
     """
-    Sends an HTML email using Hostinger SMTP with retries and throttling.
+    Returns True if email DATA was sent to SMTP server.
     """
 
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             msg = MIMEMultipart("alternative")
-            msg["From"] = f"AIAdventures – Training & Operations Team <{SMTP_EMAIL}>"
+            msg["From"] = f"AIAdventures Training Head <{SMTP_EMAIL}>"
             msg["To"] = to_email
             msg["Subject"] = subject
-
-            # HTML email (required for logo & formatting)
             msg.attach(MIMEText(body, "html"))
 
             with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=60) as server:
                 server.ehlo()
                 server.starttls()
                 server.ehlo()
-
                 server.login(SMTP_EMAIL, SMTP_PASSWORD)
                 server.send_message(msg)
 
             print(f"✅ Email sent to {to_email}")
-            time.sleep(SEND_DELAY)  # throttle (very important)
-            return
-
-        except smtplib.SMTPServerDisconnected:
-            print(f"⚠️ SMTP disconnected while sending to {to_email} "
-                  f"(attempt {attempt}/{MAX_RETRIES})")
-
-            if attempt == MAX_RETRIES:
-                raise
-
-            time.sleep(RETRY_DELAY)
+            time.sleep(SEND_DELAY)
+            return True
 
         except smtplib.SMTPDataError as e:
-            # Recipient rejected by server (disabled / blocked)
-            print(f"⚠️ Skipping recipient {to_email}: {e}")
-            return  # DO NOT crash agent
+            # DATA already sent → treat as delivered
+            print(f"⚠️ SMTPDataError AFTER send for {to_email}: {e}")
+            return True
 
         except smtplib.SMTPException as e:
             print(f"❌ SMTP error for {to_email}: {e}")
-            raise
+            return False
 
-        except Exception as e:
-            print(f"❌ Unexpected error for {to_email}: {e}")
-            raise
