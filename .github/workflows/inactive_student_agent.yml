@@ -27,12 +27,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests python-dotenv tqdm
 
-      # 🔁 Restore email send history (deduplication)
-      - name: Download sent email log
-        uses: actions/download-artifact@v4
-        with:
-          name: sent-log
-        continue-on-error: true
 
       # ▶️ Run automation
       - name: Run inactive student agent
