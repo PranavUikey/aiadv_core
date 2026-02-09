@@ -211,3 +211,5 @@ __marimo__/
 # venv
 
 venv/
+last_execution.json
+assests/

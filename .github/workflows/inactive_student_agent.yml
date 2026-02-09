@@ -3,7 +3,7 @@ name: Inactive Student Re-engagement Agent
 on:
   # Daily run at 17:30 PM IST (03:30 UTC)
   schedule:
-    - cron: "30 17 * * *"
+    - cron: "00 12 * * *"
 
   # Manual trigger
   workflow_dispatch:
